@@ -1,0 +1,26 @@
+{
+    "name": "wljs-video",
+    "version": "0.0.1",
+    "description": "Video boxes support",
+    "scripts": {
+      "build": "node --max-old-space-size=8192 ./node_modules/.bin/rollup --config rollup.config.mjs",
+      "restore": "mkdir _temp && cd _temp && git clone https://github.com/JerryI/wljs-video && mv wljs-video/.git ../.git && cd .. && rm -rf _temp"
+    },
+    "defaultPackage": true,
+    "wljs-meta": {
+      "kernel": "src/Kernel.wl",
+      "priority": 50000,
+      "category": "Visualization"
+    },
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/JerryI/wljs-video"
+    },
+    "dependencies": {
+      "rollup": "^3.21.6"
+    },
+    "resolutions": {
+      "@babel/preset-env": "7.13.8"
+    }
+  }
+  
