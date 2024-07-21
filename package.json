@@ -10,7 +10,9 @@
     "wljs-meta": {
       "kernel": "src/Kernel.wl",
       "priority": 50000,
-      "category": "Visualization"
+      "category": "Visualization",
+      "cellExportRequired": true,
+      "figureExportRequired": true
     },
     "repository": {
       "type": "git",
