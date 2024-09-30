@@ -1,4 +1,14 @@
-BeginPackage["JerryI`Notebook`GraphicsVideo`", {"JerryI`Misc`Events`", "Notebook`Editor`Boxes`", "Notebook`Kernel`Inputs`", "JerryI`Misc`Language`", "JerryI`Misc`Async`", "JerryI`Misc`WLJS`Transport`"}]
+BeginPackage["JerryI`Notebook`GraphicsVideo`", {
+    "JerryI`Misc`Events`", 
+    "Notebook`Editor`Boxes`",
+    "Notebook`Editor`Kernel`FrontSubmitService`", 
+    "Notebook`Kernel`Inputs`", 
+    "JerryI`Misc`Language`", 
+    "JerryI`Misc`Async`", 
+    "JerryI`Misc`WLJS`Transport`",
+    "KirillBelov`CSockets`EventsExtension`",
+    "KirillBelov`CSockets`"
+}]
 Begin["`Internal`"]
 
 System`VideoWrapper;
@@ -14,37 +24,66 @@ MakeBoxes /: MakeBoxes[VideoWrapper[v_Video], StandardForm] := With[{
     click = CreateUUID[]
 },
     LeakyModule[{
-        movie = NumericArray[ImageData[ImageResize[#, width], "Byte"], "UnsignedInteger8"] &/@ VideoFrameList[v, 1],
+        movie = VideoFrameList[v, {"Random",1}],
         Global`frames,
         index = 1,
-        task
+        playing = False,
+        task,
+        socket = Null
     },
         (* prevent garbage collecting *)
         AppendTo[trash, Hold[v] ];
 
-        Global`frames = movie // First;
+        Global`frames = NumericArray[ImageData[movie[[1]], "Byte"], "UnsignedInteger8"];
 
         With[{
-            img = CreateFrontEndObject[Image[Global`frames // Offload, "Byte"] ]
+            img = Image[Global`frames // Offload, "Byte"],
+            window = CurrentWindow[]
         },
-            EventHandler[click, Function[Null,
-                Print["Decoding frames..."];
-                If[Length[movie] === 1, movie = NumericArray[ImageData[ImageResize[#, width], "Byte"], "UnsignedInteger8"] &/@ VideoFrameList[v, 50] ];
+          
+            With[{preview =  Labeled[img, Row[{EventHandler[InputButton["Play/Pause"], Function[Null,
+                If[playing,
+                    TaskRemove[task];
+                    playing = False;
+                    index = 1;
+                    Return[];
+                ];
+
+                If[socket == Null, 
+                    socket = EventClone[Global`$Client];
+                    EventHandler[socket, {
+                        "Closed" -> Function[Null,
+                            TaskRemove[task];
+                            playing = False;
+                            socket = Null;
+                            index = 1;
+                        ]
+                    }];
+                ];
+
+                playing = True;
+
+                
+                If[Length[movie] === 1, Print["Decoding video..."]; movie = VideoFrameList[v, All] ];
+
                 index = 1;
                 task = SetInterval[
-                    Global`frames = movie[[index]];
+                    Global`frames = NumericArray[ImageData[movie[[index]], "Byte"], "UnsignedInteger8"];
                     index += 1;
-                    If[index > 30, 
+                    If[index >= Length[movie], 
                         index = 1;
                         TaskRemove[task];
+                        playing = False;
                         Print["Finished"];
                     ];
                 , 1000/framerate];
-            ] ];
+            ] ]}] ]//Panel},
+                With[{ibox = Interpretation[preview, v]},
+                    MakeBoxes[ibox, StandardForm]
+                ]
 
-            (* low-level optimization, bypass normal Pane in order to create a single instance of the editor *)
-            With[{preview = {Hold[PaneBox["Event"->click] ], img} },
-                ViewBox[v, preview]
+            
+             
             ]
         ]
     ]
