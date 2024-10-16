@@ -65,7 +65,7 @@ With[{
         Global`frames = NumericArray[ImageData[movie[[1]], "Byte"], "UnsignedInteger8"];
 
         With[{
-            img = Image[Global`frames // Offload, "Byte"],
+            img = Image[Global`frames // Offload, "Byte"] // Quiet,
             window = CurrentWindow[],
             ev = EventObject[]
         },
