@@ -1,6 +1,6 @@
 {
     "name": "wljs-video",
-    "version": "0.0.4",
+    "version": "0.0.5",
     "description": "Video boxes support",
     "scripts": {
       "build": "node --max-old-space-size=8192 ./node_modules/.bin/rollup --config rollup.config.mjs",
