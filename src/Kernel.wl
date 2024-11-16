@@ -18,13 +18,18 @@ System`WLXForm;
 (* prevent collecting from Garbage. Mathematica's bug*)
 trash = {};
 
+Video;
 
 Unprotect[Video]
+
+FormatValues[Video] = {};
 
 Unprotect[TemplateBox]
 TemplateBox[Video`VideoGUIDump`assoc_,"VideoBox2", ___] := With[{v = Video[Video`VideoGUIDump`assoc["resourcePath"] ]},
     gui[v, StandardForm]
 ]
+
+Video /: MakeBoxes[v_Video, WLXForm] := gui[v, WLXForm]
 
 Video /: MakeBoxes[
         Video`VideoGUIDump`video
@@ -33,15 +38,11 @@ Video /: MakeBoxes[
              Video`VideoGUIDump`options___]
         ,
         Video`VideoGUIDump`fmt_
-    ] /; Video`ValidVideoQHold[Video`VideoGUIDump`video
-        ] && BoxForm`sufficientVersionQ[12.2`
-        ] :=
+    ] /; Video`ValidVideoQHold[Video`VideoGUIDump`video]  :=
     With[{
 
     },
         gui[Video`VideoGUIDump`video, Video`VideoGUIDump`fmt]
-        /;
-        True
     ]
 
 gui[Video`VideoGUIDump`video_, Video`VideoGUIDump`fmt_] := 
