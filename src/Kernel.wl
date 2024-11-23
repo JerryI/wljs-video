@@ -19,10 +19,13 @@ System`WLXForm;
 trash = {};
 
 Video;
+AnimatedImage;
 
 Unprotect[Video]
+Unprotect[AnimatedImage]
 
 FormatValues[Video] = {};
+FormatValues[AnimatedImage] = {};
 
 Unprotect[TemplateBox]
 TemplateBox[Video`VideoGUIDump`assoc_,"VideoBox2", ___] := With[{v = Video[Video`VideoGUIDump`assoc["resourcePath"] ]},
@@ -30,6 +33,9 @@ TemplateBox[Video`VideoGUIDump`assoc_,"VideoBox2", ___] := With[{v = Video[Video
 ]
 
 Video /: MakeBoxes[v_Video, WLXForm] := gui[v, WLXForm]
+
+AnimatedImage /: MakeBoxes[v_AnimatedImage, frmt_] := gui[v, frmt]
+
 
 Video /: MakeBoxes[
         Video`VideoGUIDump`video
@@ -45,7 +51,7 @@ Video /: MakeBoxes[
         gui[Video`VideoGUIDump`video, Video`VideoGUIDump`fmt]
     ]
 
-gui[Video`VideoGUIDump`video_, Video`VideoGUIDump`fmt_] := 
+gui[Video`VideoGUIDump`video_Video, Video`VideoGUIDump`fmt_] := 
 With[{
     (* limit the width since JSON packets are slow *)
     width = Min[ImageDimensions[VideoFrameList[Video`VideoGUIDump`video, 1]//First ] // First, 500],
@@ -148,6 +154,92 @@ With[{
 
             
              
+            ]
+        ]
+    ]
+]
+
+
+gui[animatedImage : AnimatedImage[listframes_, opts__], fmt_] := 
+With[{
+    click = CreateUUID[],
+    width = ImageDimensions[listframes//First ] // First
+},
+    LeakyModule[{
+        Global`frames,
+        index = 1,
+        playing = False,
+        origin,
+        task,
+        socket = Null
+    },
+        (* prevent garbage collecting *)
+        AppendTo[trash, Hold[origin] ];
+
+        
+
+        Global`frames = NumericArray[ImageData[listframes[[1]], "Byte"], "UnsignedInteger8"];
+
+        With[{
+            img = If[width < 300, Image[Global`frames // Offload, "Byte", Magnification -> (Ceiling[300/width] + 1) ] // Quiet, Image[Global`frames // Offload, "Byte"] // Quiet],
+            window = CurrentWindow[],
+            ev = EventObject[]
+        },
+
+            EventHandler[ev, 
+            
+            {
+                "Play/Stop" -> Function[Null,
+                    If[playing,
+                        TaskRemove[task];
+                        playing = False;
+                        Return[];
+                    ];
+
+                    If[socket == Null, 
+                        socket = EventClone[Global`$Client];
+                        EventHandler[socket, {
+                            "Closed" -> Function[Null,
+                                TaskRemove[task];
+                                playing = False;
+                                socket = Null;
+                                index = 1;
+                            ]
+                        }];
+                    ];
+
+                    playing = True;
+
+                    task = SetInterval[
+                        Global`frames = NumericArray[ImageData[listframes[[index]], "Byte"], "UnsignedInteger8"];
+                        index += 1;
+                        If[index >= Length[listframes], 
+                            index = 1;
+                        ];
+
+                    , 1000.0/25.0];                     
+                ]
+            } 
+            
+            ];        
+          
+            With[{preview =  Labeled[img, Row[{
+                InputButton[ev, "Play/Stop", "Topic"->"Play/Stop"], Style["Data is on Kernel", FontSize->10]
+            }] ]//Panel},
+
+                If[Video`VideoGUIDump`fmt === WLXForm,
+                    With[{m = EditorView[ToString[preview, StandardForm] ]},
+                        MakeBoxes[m, WLXForm]
+                    ]
+                ,
+                    With[{ibox = Interpretation[preview, origin]},
+                        
+                        With[{m = MakeBoxes[ibox, StandardForm]},
+                            origin = animatedImage;
+                            m
+                        ]
+                    ]                
+                ]
             ]
         ]
     ]
