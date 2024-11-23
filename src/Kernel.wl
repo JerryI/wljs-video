@@ -160,10 +160,11 @@ With[{
 ]
 
 
-gui[animatedImage : AnimatedImage[listframes_, opts__], fmt_] := 
+gui[animatedImage : AnimatedImage[listframes_, opts: OptionsPattern[] ], fmt_] := 
 With[{
     click = CreateUUID[],
-    width = ImageDimensions[listframes//First ] // First
+    width = ImageDimensions[listframes//First ] // Max,
+    framerate = Lookup[Association[opts], FrameRate, 25]
 },
     LeakyModule[{
         Global`frames,
@@ -181,7 +182,7 @@ With[{
         Global`frames = NumericArray[ImageData[listframes[[1]], "Byte"], "UnsignedInteger8"];
 
         With[{
-            img = If[width < 300, Image[Global`frames // Offload, "Byte", Magnification -> (Ceiling[300/width] + 1) ] // Quiet, Image[Global`frames // Offload, "Byte"] // Quiet],
+            img = If[width < 300, Image[Global`frames // Offload, "Byte", Magnification -> (Round[300/width] + 1) ] // Quiet, Image[Global`frames // Offload, "Byte"] // Quiet],
             window = CurrentWindow[],
             ev = EventObject[]
         },
@@ -217,7 +218,7 @@ With[{
                             index = 1;
                         ];
 
-                    , 1000.0/25.0];                     
+                    , 1000.0/framerate];                     
                 ]
             } 
             
