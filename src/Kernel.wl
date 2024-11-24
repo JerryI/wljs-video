@@ -63,7 +63,7 @@ With[{
         Global`frames,
         index = 1,
         playing = False,
-        task,
+        task = Null,
         socket = Null
     },
         (* prevent garbage collecting *)
@@ -85,6 +85,7 @@ With[{
 
                     If[playing,
                         TaskRemove[task];
+                        task = Null;
                         playing = False;
                         Return[];
                     ];
@@ -93,7 +94,7 @@ With[{
                         socket = EventClone[Global`$Client];
                         EventHandler[socket, {
                             "Closed" -> Function[Null,
-                                TaskRemove[task];
+                                If[task =!= Null, TaskRemove[task] ];
                                 playing = False;
                                 socket = Null;
                                 index = 1;
@@ -113,6 +114,7 @@ With[{
                         If[index >= Length[movie], 
                             index = 1;
                             TaskRemove[task];
+                            task = Null;
                             playing = False;
                             Print["Finished"];
                         ];
@@ -127,6 +129,7 @@ With[{
 
                     index = 1;
                     TaskRemove[task];
+                    task = Null;
                     playing = False;
                 ]
 
@@ -171,7 +174,7 @@ With[{
         index = 1,
         playing = False,
         origin,
-        task,
+        task = Null,
         socket = Null
     },
         (* prevent garbage collecting *)
@@ -193,6 +196,7 @@ With[{
                 "Play/Stop" -> Function[Null,
                     If[playing,
                         TaskRemove[task];
+                        task = Null;
                         playing = False;
                         Return[];
                     ];
@@ -201,7 +205,8 @@ With[{
                         socket = EventClone[Global`$Client];
                         EventHandler[socket, {
                             "Closed" -> Function[Null,
-                                TaskRemove[task];
+                                If[task =!= Null, TaskRemove[task] ];
+                                task = Null;
                                 playing = False;
                                 socket = Null;
                                 index = 1;
