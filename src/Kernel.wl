@@ -60,7 +60,7 @@ With[{
 },
     LeakyModule[{
         movie = VideoFrameList[Video`VideoGUIDump`video, {"Random",1}],
-        Global`frames,
+        System`frames,
         index = 1,
         playing = False,
         task = Null,
@@ -69,10 +69,10 @@ With[{
         (* prevent garbage collecting *)
         AppendTo[trash, Hold[Video`VideoGUIDump`video] ];
 
-        Global`frames = NumericArray[ImageData[movie[[1]], "Byte"], "UnsignedInteger8"];
+        System`frames = NumericArray[ImageData[movie[[1]], "Byte"], "UnsignedInteger8"];
 
         With[{
-            img = Image[Global`frames // Offload, "Byte"] // Quiet,
+            img = Image[System`frames // Offload, "Byte"] // Quiet,
             window = CurrentWindow[],
             ev = EventObject[]
         },
@@ -109,7 +109,7 @@ With[{
 
 
                     task = SetInterval[
-                        Global`frames = NumericArray[ImageData[movie[[index]], "Byte"], "UnsignedInteger8"];
+                        System`frames = NumericArray[ImageData[movie[[index]], "Byte"], "UnsignedInteger8"];
                         index += 1;
                         If[index >= Length[movie], 
                             index = 1;
@@ -170,7 +170,7 @@ With[{
     framerate = Lookup[Association[opts], FrameRate, 25]
 },
     LeakyModule[{
-        Global`frames,
+        System`frames,
         index = 1,
         playing = False,
         origin,
@@ -182,10 +182,10 @@ With[{
 
         
 
-        Global`frames = NumericArray[ImageData[listframes[[1]], "Byte"], "UnsignedInteger8"];
+        System`frames = NumericArray[ImageData[listframes[[1]], "Byte"], "UnsignedInteger8"];
 
         With[{
-            img = If[width < 300, Image[Global`frames // Offload, "Byte", Magnification -> (Round[300/width] + 1) ] // Quiet, Image[Global`frames // Offload, "Byte"] // Quiet],
+            img = If[width < 300, Image[System`frames // Offload, "Byte", Magnification -> (Round[300/width] + 1) ] // Quiet, Image[System`frames // Offload, "Byte"] // Quiet],
             window = CurrentWindow[],
             ev = EventObject[]
         },
@@ -217,7 +217,7 @@ With[{
                     playing = True;
 
                     task = SetInterval[
-                        Global`frames = NumericArray[ImageData[listframes[[index]], "Byte"], "UnsignedInteger8"];
+                        System`frames = NumericArray[ImageData[listframes[[index]], "Byte"], "UnsignedInteger8"];
                         index += 1;
                         If[index >= Length[listframes], 
                             index = 1;
